@@ -83,7 +83,7 @@ Expected usage:
        
        If your company does not limit sick-leave accrual, delete this line.
        
-   * If you are paid bi-weekly, then some months will have to paychecks and
+   * If you are paid bi-weekly, then some months will have two paychecks and
      some will have three.  Set the `three_check_months` array to be a list of
      the three-check months, so vacation accruals will be computed correctly.
 
