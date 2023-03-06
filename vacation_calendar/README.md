@@ -3,7 +3,9 @@
 A JavaScript library for generating a calendar that tracks used and remaining
 paid time-off based on a list of provided dates.
 
-Example: [Sample calendar](sample_calendar.html)
+Example:
+* [Sample calendar](sample_calendar.html)
+* [Sample calendar preview](https://htmlpreview.github.io/?https://github.com/Shamino0/scriptsandtools/blob/main/vacation_calendar/sample_calendar.html)
 
 Expected usage:
 
