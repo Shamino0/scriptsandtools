@@ -2,12 +2,12 @@
 
 # Ediff a file against a two p4 revisions (3-way diff)
 #
-# usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]
+# usage: p4ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]
 #
-# ediff3 foo#3#4 - compare foo against versions 3 and 4
+# p4ediff3 foo#3#4 - compare foo against versions 3 and 4
 
 if ( [ -z $1'' ];) then
-    echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+    echo 'usage: p4ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
     exit
 fi
 
@@ -20,10 +20,10 @@ until ( [ -z $1'' ]; ) do
     suffix_2=`echo $base_1 | sed 's/.*#\(.*\)/\1/'`
 
     if ( [ $base = $suffix_1 ]; ) then
-	echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+	echo 'usage: p4ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
 	exit
     elif ( [ $base = $suffix_2 ]; ) then
-	echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+	echo 'usage: p4ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
 	exit
     else
 	echo ediff $base#$suffix_2 against $base#$suffix_1 against $base

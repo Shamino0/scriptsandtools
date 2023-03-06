@@ -2,17 +2,17 @@
 
 # Ediff a file against a p4 revision or two p4 revisions against each other
 #
-# usage: ediff <file>[#<rev>] [<file>[#<rev>] ...]
+# usage: p4ediff <file>[#<rev>] [<file>[#<rev>] ...]
 #
-# ediff foo - compare foo against the latest version in p4
+# p4ediff foo - compare foo against the latest version in p4
 #
-# ediff foo#3 - compare foo against version 3 in p4
+# p4ediff foo#3 - compare foo against version 3 in p4
 #
-# ediff foo#3#7 - compare foo version 3 against foo version 7 in p4
+# p4ediff foo#3#7 - compare foo version 3 against foo version 7 in p4
 
 
 if ( [ -z $1'' ];) then
-    echo 'usage: ediff <file>[[#<rev>]#<rev>] [<file>[[#<rev>]#<rev>] ...]'
+    echo 'usage: p4ediff <file>[[#<rev>]#<rev>] [<file>[[#<rev>]#<rev>] ...]'
     exit
 fi
 
