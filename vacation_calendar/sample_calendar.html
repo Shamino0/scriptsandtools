@@ -19,19 +19,19 @@ var year=2023
 var pto_counts =
 {
     // Floating holidays
-    floating                :  2,
+    floating                 :  2,
 
     // Personal leave
-    personal                :  2,
+    personal                 :  2,
     
     // Sick leave
-    sick                    :  5,
+    sick                     :  5,
 
     // Vacation
-    vacation                : 10,
+    vacation                 : 10,
 
     // Volunteer leave
-    volunteer               : 1,
+    volunteer                : 1,
 
     /*
      * True means vacation accrues per pay period (2 or 3 periods per month, as
@@ -40,7 +40,7 @@ var pto_counts =
      * False means all vacation is block-granted on January 1st for the entire
      * year
      */
-    vacation_accrual        : true,
+    vacation_accrual         : true,
 
     /*
      * True means sick leave accrues per pay period (2 or 3 periods per month,
@@ -49,26 +49,26 @@ var pto_counts =
      * False means all sick leave is block-granted on January 1st for the
      * entire year
      */
-    sick_accrual            : false,
+    sick_accrual             : false,
 
     // Maximum amount of vacation you can carry over to the next year
-    varation_carryover_limit : 5,
+    vacation_carryover_limit : 5,
 
     // Maximum amount of sick leave you can carry over to the next year
     sick_carryover_limit     : 5,
 
     // Amount of vacation carried over from the previous year
-    vacation_carryin        : 3.5,
+    vacation_carryin         : 3.5,
 
     // Amount of sick leave carried over from the previous year
-    sick_carryin            : 1,
+    sick_carryin             : 1,
 
     // The maximum amount of vacation that can be accrued before accrual stops
-    max_vacation_accrual    : 20,
+    max_vacation_accrual     : 20,
 
     // The maximum amount of sick leave that can be accrued before accrual
     // stops
-    max_sick_accrual        : 10,
+    max_sick_accrual         : 10,
     
 };
 
@@ -121,7 +121,7 @@ var three_check_months = [ 6, 12 ];
 var pto_data = [
     [ 1,  2, "h",  1,    "New Years Day (observed)"],
     [ 1,  9, "s",  1,    "Sick with the flu"],
-    [ 1, 16, "f",  1,    "Martin Luterh King Day"],
+    [ 1, 16, "f",  1,    "Martin Luther King Day"],
     [ 2,  2, "s",  0.25, "Dentist's appointment"],
     [ 2, 20, "f",  1,    "President's Day"],
     [ 5, 25, "p",  1,    "Family wedding"],
