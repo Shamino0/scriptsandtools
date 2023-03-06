@@ -17,10 +17,22 @@ using Emacs.
 
 [Git scripts](git/README.md)
 
+## IETF scripts
+
+Two scripts that work together for keeping a local mirror of the IETF RFCs,
+drafts and related documents.  Also converts the corresponding index files into
+HTML with links to the docs (suitable for serving by a local web server).
+
+This is probably not necessary, since the IETF provides a great web interface,
+but I've been maintaining this archive for over 20 years and I don't want to
+stop now.
+
+[IETF scripts](ietf/README.md)
+
 ## P4 scripts
 
 Several scripts that I have found useful (in the every-increasingly distant
-past) while developing softare with Perforce.  Mostly packages for fetching
+past) while developing software with Perforce.  Mostly packages for fetching
 specific versions of files and comparing them using Emacs.
 
 Most of my Git scripts evolved from these scripts

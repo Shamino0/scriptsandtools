@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+
+# Usage:
+#
+# draft_index_to_html < infile > outfile
+# draft_index_to_html infile > outfile
+# draft_index_to_html infile outfile
+
+# Get in-file
+#
+if (@ARGV)
+{
+    $ARGV = shift @ARGV;
+
+    open STDIN, "<$ARGV" or die "Can't redrect stdin to $ARGV\n";
+
+    if (@ARGV)
+    {
+	$ARGV = shift @ARGV;
+	open STDOUT, ">$ARGV" or die "Can't redirect stdout to $ARGV\n";
+    }
+}
+
+# Output an HTML header to stdout, followed by a <PRE> tag
+
+print "<HTML><HEAD><TITLE>Current Internet-Drafts</TITLE></HEAD>\n";
+print "<BODY>\n";
+print "<PRE>\n";
+
+# Loop through the file.  Any line that contains a draft reference (text
+# beginning with "draft-" and bracketed in <>), take aside for special
+# processing to make hyperlinks.  Copy the rest unchanged.
+
+while (defined($_ = <STDIN>))
+{
+    # Replace < and > with &gt; and &lt, to make valid HTML
+
+    $strout = $_;
+    $strout =~ s/&/&amp;/g;
+    $strout =~ s/</&lt;/g;
+    $strout =~ s/>/&gt;/g;
+
+    print $strout;
+
+    if (($draft) = /.*<(draft-.*)>.*/)
+    {
+	# Now, extract the suffixes from the names.  The base name ends and
+	# the suffixes begin at the dot
+	($basename,$suffixes) = $draft =~ /(draft-[^.]*)(.*)/;
+
+	@suffixes = split /,/, $suffixes;
+
+	# Now generate all the links:
+	print "  ";
+
+	if (@suffixes)
+	{
+	    while (@suffixes)
+	    {
+		$suffix = shift @suffixes;
+		($nodot) = $suffix =~ /\.(.*)/;
+
+		print '[<A HREF="', $basename, $suffix, '">', $nodot, '</A>] ';
+	    }
+	}
+
+	print '[<A HREF="http://tools.ietf.org/html/', $basename, '">', ;
+	print "IETF web site</A>]\n";
+    }
+}
+
+# And we're done
+
+print "</PRE>\n";
+print "</BODY>\n";
+print "</HTML>\n";

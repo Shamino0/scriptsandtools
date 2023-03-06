@@ -1,7 +1,7 @@
 # P4 scripts
 
 Several scripts that I have found useful (in the every-increasingly distant
-past) while developing softare with Perforce.  Mostly packages for fetching
+past) while developing software with Perforce.  Mostly packages for fetching
 specific versions of files and comparing them using Emacs.
 
 * [p4ediff](#p4ediff)
