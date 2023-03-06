@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Get all the changes of a specific commit and ediff them all.  Either against
+# their previous revision or against a specific revision.
+#
+# Usage:
+#    gitedittcommit <commit_no> [<base_rev>]
+#
+# Where:
+#     <commit_no> is the git commit number we're investigating
+#     <base_rev> is what we're diffing against.  Gitediff's syntax should be
+#         used here:
+#
+#         A negative integer refers to the most recent "nth" version.  Relative
+#         to the brach, NOT to the commit we're diffing!.  For example, -1
+#         represents HEAD, -2 represents the revision prior to HEAD, and -5
+#         represents the 5th most recent version of the file.
+#
+#         Anything else is a git revision spec string and will typically refer
+#         to a specific commit or one of the magic keywords like HEAD.
+#
+#         Note that -5 and HEAD~5 are completely different.  -5 is the 5th most
+#         recent version of the specified file.  HEAD~5 means the version of
+#         the file as of the 5th most recent commit.  The two will not be the
+#         same unless the file was changed in all of the most recent 5 commits.
+#
+# If <base_rev> is not specified, then <commit_no>^ is used, which means "the
+# commit immediately prior to the one specified
+#
+# This script will, for each file in the commit, call:
+#     gitediff <file>#<commit_no>#<base_rev>
+
+if [ -z "$1" ]; then
+    # No arguments.  Dump usage and exit
+    echo 'usage: gitediffcommit <commit_no> [<base_rev>]'
+    exit
+fi
+
+# Get the commit number and base revision.  And quote them for when we
+# pass them to sed, which can't handle slash characters without
+# quoting
+
+COMMIT_NO="$1"
+QUOTED_COMMIT_NO=`echo $COMMIT_NO | sed 's&/&\\\\/&g'`
+
+if [ -z "$2" ]; then
+    BASE_REV="$COMMIT_NO^"
+else
+    BASE_REV="$2"
+fi
+
+QUOTED_BASE_REV=`echo $BASE_REV | sed 's&/&\\\\/&g'`
+
+# Get the git root and quote all the forward slashes...
+GIT_ROOT=`git rev-parse --show-toplevel | sed 's&/&\\\\/&g'`
+
+# Do the "git show" three times, looking for different filename-header lines.
+# "diff --git", "diff --cc" and "diff --combiined" could all be found
+#
+DIFFS=`git show "$COMMIT_NO" | grep '^diff --git a/'`
+if [ -n "$DIFFS" ]; then
+    echo "$DIFFS" | \
+	sed 's/.* b\/\(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT_NO"'#'"$QUOTED_BASE_REV"'/' | \
+	xargs gitediff
+fi
+
+DIFFS=`git show "$COMMIT_NO" | grep '^diff --cc '`
+if [ -n "$DIFFS" ]; then
+    echo "$DIFFS" | \
+	sed 's/^diff --cc \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT_NO"'#'"$QUOTED_BASE_REV"'/' | \
+	xargs gitediff
+fi
+
+DIFFS=`git show "$COMMIT_NO" | grep '^diff --combined '`
+if [ -n "$DIFFS" ]; then
+    echo "$DIFFS" | \
+	sed 's/^diff --combined \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT_NO"'#'"$QUOTED_BASE_REV"'/' | \
+	xargs gitediff
+fi

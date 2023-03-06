@@ -1,0 +1,2 @@
+#!/bin/sh
+p4 files ...@$P4CLIENT | sed 's/.* change \([0-9]*\) .*/\1/' | sort -n | tail -1

@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Ediff a file against a two p4 revisions (3-way diff)
+#
+# usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]
+#
+# ediff3 foo#3#4 - compare foo against versions 3 and 4
+
+if ( [ -z $1'' ];) then
+    echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+    exit
+fi
+
+until ( [ -z $1'' ]; ) do
+
+    base_1=`echo $1 | sed 's/\(.*\)#.*/\1/'`
+    suffix_1=`echo $1 | sed 's/.*#\(.*\)/\1/'`
+
+    base=`echo $base_1 | sed 's/\(.*\)#.*/\1/'`
+    suffix_2=`echo $base_1 | sed 's/.*#\(.*\)/\1/'`
+
+    if ( [ $base = $suffix_1 ]; ) then
+	echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+	exit
+    elif ( [ $base = $suffix_2 ]; ) then
+	echo 'usage: ediff3 <file>#<rev>#<rev> [<file>#<rev>#<rev> ...]'
+	exit
+    else
+	echo ediff $base#$suffix_2 against $base#$suffix_1 against $base
+
+	tmpfilename1=/tmp/ediff_1_$$_`basename $base`
+	tmpfilename2=/tmp/ediff_2_$$_`basename $base`
+	p4 print $base#$suffix_1 > $tmpfilename1
+	p4 print $base#$suffix_2 > $tmpfilename2
+	emacs --eval "(ediff-files3 \"$tmpfilename2\" \"$tmpfilename1\" \"$base\")"
+	rm $tmpfilename1
+	rm $tmpfilename2
+    fi
+
+    shift 1
+done

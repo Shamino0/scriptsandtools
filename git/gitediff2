@@ -1,0 +1,226 @@
+#!/usr/bin/perl
+
+# Ediff two arbitrary files, allowing the specification of a git
+# revision specification for each.
+#
+# usage: gitediff2 <file>[#<rev>] <file>[#<rev>] ...
+#
+# gitediff2 foo bar - compare foo against bar (local files)
+#
+# gitediff2 foo bar#<ver> - compare foo (local file) against bar (git revision)
+#
+# versions <ver> may be any git revision spec string or a negative integer.
+#
+# negative integers reflect most recent "nth" version.  For instance -1
+# represents HEAD (same as omitting the number.)  -5 represents the fifth most
+# recent version of the file.  Note that this is NOT the same as HEAD~5.
+# HEAD~5 represents the version as of the fifth most recent commit, which is
+# not necessarily the fifth most recent version of the file itself.
+
+use Cwd 'abs_path';
+use File::Basename;
+use File::Spec;
+
+
+# get_git_file <tmp_filename> <git_filename> [<ver>]
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file
+{
+    my($tmp_filename) = shift(@_);
+    my($filename)     = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    if ($ver =~ /^-/)
+    {
+	# Version begins with "-" - it's a negative number.  Go searching for
+	# revisions
+
+	my($count) = abs($ver);
+	if ($count == 0)
+	{
+	    print "Version offset is zero or non-numeric.  Using HEAD\n";
+	    return get_git_file_revision($tmp_filename, $git_filename, "");
+	}
+
+	# Do a "git log", piping the output.  Search for strings beginning
+	# with "commit", getting the commit numbers.  When we see the nth
+	# commit, or if we run out of commits, use what we found
+
+	my($commitnum);
+
+	open COMMITLIST, "git log $filename |"
+	    or die "Can't git log $filename into a pipe";
+	while(<COMMITLIST>)
+	{
+	    if (/^commit /)
+	    {
+		chomp;
+		s/^commit //;
+		$commitnum = $_;
+
+		$count--;
+		if ($count == 0)
+		{
+		    # Use this commit number
+		    my($ret) = close COMMITLIST;
+		    if (($ret == 0) && ($! != 0))
+		    {
+			die "Can't close pipe from git";
+		    }
+
+		    return get_git_file_revision($tmp_filename, $git_filename,
+						 $commitnum);
+		}
+	    }
+	}
+	close COMMITLIST or die "Can't close pipe from git";
+
+	# Ran out of commits, use the last one
+	return get_git_file_revision($tmp_filename, $git_filename, $commitnum);
+    }
+    else
+    {
+	# Version doesn't begin with "-" - use it as the version
+
+	get_git_file_revision($tmp_filename, $git_filename, $ver);
+    }
+}
+
+# get_git_file_revision <tmp_filename> <git_filename> [<ver>]
+#
+# Get a git file to a temporary filename using a git revision spec only
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file_revision
+{
+    my($tmp_filename) = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    open WRITESTATUS, "> $tmp_filename" or die "Can't open temp file";
+
+    if ($ver eq "")
+    {
+	open READSTATUS, "git show :$git_filename |"
+	    or die "Can't git show :$git_filename into a pipe";
+    }
+    else
+    {
+	open READSTATUS, "git show $ver:$git_filename |"
+	    or die "Can't git show $ver:$git_filename into a pipe";
+    }
+
+    while (<READSTATUS>)
+    {
+	print WRITESTATUS;
+    }
+    close READSTATUS;
+    close WRITESTATUS;
+}
+
+# We must have an even number of arguments
+if ((scalar @ARGV % 2) != 0)
+{
+    print "Usage: gitediff2 <file>[#<rev>] <file>[#rev] ...\n";
+    exit 1;
+}
+
+# Get the git-root.
+chomp($git_root = `git rev-parse --show-toplevel`);
+
+# Loop through all the files, two at a time
+
+while (@ARGV)
+{
+    # Get the two input files
+    $file1 = shift @ARGV;
+    $file2 = shift @ARGV;
+
+    # Split each file name into filename and version
+
+    ($filename1, $ver1) = split /\#/, $file1;
+    ($filename2, $ver2) = split /\#/, $file2;
+
+    # Make the filenames into an absolute paths, then relative to the git-root
+    $git_filename1 = abs_path($filename1);
+    $git_filename1 = File::Spec->abs2rel($git_filename1, $git_root);
+    $basename1 = fileparse($filename1);
+
+    $git_filename2 = abs_path($filename2);
+    $git_filename2 = File::Spec->abs2rel($git_filename2, $git_root);
+    $basename2 = fileparse($filename2);
+
+    # Get an input filenames relative to CWD, for output purposes only
+    $display_filename1 = File::Spec->abs2rel($filename1);
+    $display_filename2 = File::Spec->abs2rel($filename2);
+
+    if (($ver1 eq "") && ($ver2 eq ""))
+    {
+	# Both files are local.  Just diff them
+
+	print "Ediff $display_filename1 against $display_filename2\n";
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$filename1\" \"$filename2\")");
+    }
+    elsif ($ver1 eq "")
+    {
+	# Filename 1 is a local version.  Filename 2 is a git revision.
+	# Do a "git show" to get it, redirected to a temporary file.
+
+	print "Ediff $display_filename1 against $display_filename2 version $ver2\n";
+
+	$tmpfilename = "/tmp/gitediff2_" . $$ . "_$basename2";
+
+	get_git_file($tmpfilename, $filename2, $git_filename2, $ver2);
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$filename1\" \"$tmpfilename\")");
+	unlink $tmpfilename;
+    }
+    elsif ($ver2 eq "")
+    {
+	# Filename 2 is a local version.  Filename 1 is a git revision.
+	# Do a "git show" to get it, redirected to a temporary file.
+
+	print "Ediff $display_filename1 version $ver1 against $display_filename2\n";
+
+	$tmpfilename = "/tmp/gitediff2_" . $$ . "_$basename1";
+
+	get_git_file($tmpfilename, $filename1, $git_filename1, $ver1);
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$tmpfilename\" \"$filename2\")");
+	unlink $tmpfilename;
+    }
+    else
+    {
+	# Both files are git revisions.  Get them both to temporary files
+	# and diff the results
+
+	print "Ediff $display_filename1 version $ver1 against $display_filename2 version $ver2\n";
+
+	$tmpfilename1 = "/tmp/gitediff2_" . $$ . "_$basename1";
+	$tmpfilename2 = "/tmp/gitediff2_" . $$ . "_$basename2";
+
+	get_git_file($tmpfilename1, $filename1, $git_filename1, $ver1);
+	get_git_file($tmpfilename2, $filename2, $git_filename2, $ver2);
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$tmpfilename1\" \"$tmpfilename2\")");
+	unlink $tmpfilename1;
+	unlink $tmpfilename2;
+    }
+}

@@ -1,0 +1,324 @@
+#!/usr/bin/env perl
+
+# Usage:
+#
+# rfc_index_to_html [-bfirs] < infile > outfile
+# rfc_index_to_html [-bfirs] infile > outfile
+# rfc_index_to_html [-bfirs] infile outfile
+#
+# -b means parse a BCP-index
+# -f means parse an FYI-index
+# -i means parse an IEN-index
+# -r means parse an RFC-index (default)
+# -s means parse an STD-index
+
+use Getopt::Std;
+
+# write the row of links at the bottom of a document's text.
+#
+# This function expects the global variables @suffixes, $doc_type, and
+# $number to have valid values.  I could make them function parameters
+# but it's not really necessary for code this simple
+#
+sub write_links
+{
+    $has_txt = 0;
+    $printed_link = 0;
+
+    if (@suffixes)
+    {
+	while (@suffixes)
+	{
+	    $suffix = lc shift @suffixes;
+
+	    if (!$printed_link)
+	    {
+		print "     ";
+	    }
+
+	    print '<A HREF="', $doc_path, $doc_type, $number, '.', $suffix;
+	    print '">[', $suffix, ']</A> ';
+
+	    $printed_link = 1;
+
+	    if ($suffix eq "txt")
+	    {
+		$has_txt = 1;
+	    }
+	}
+    }
+
+    if ($no_ietf == "")
+    {
+	if (($has_txt) || $opt_b)
+	{
+	    # If the IETF has a text version, then we can link to the
+	    # generated HTML version
+	    #
+	    # The $opt_b condition is a hack - generate an HTML link
+	    # even when we don't have text if this is BCP.  This is
+	    # historic BCPs don't have TXT files, but are on the IETF
+	    # web server as HTML
+	    #
+	    if (!$printed_link)
+	    {
+		print "     ";
+	    }
+
+	    print '<A HREF="http://tools.ietf.org/html/', $doc_type;
+	    print $number, '">[IETF web site]</A>';
+
+	    $printed_link = 1;
+	}
+	elsif (!$opt_s)
+	{
+	    # Don't have a text version and therefore no HTML version.
+	    # Link to the default format (which will probably be PDF.)
+	    #
+	    # The !$opt_s condition is because STDs without TXT files
+	    # don't have any links to the IETF web site.
+	    #
+	    if (!$printed_link)
+	    {
+		print "     ";
+	    }
+
+	    print '<A HREF="http://tools.ietf.org/rfc/', $doc_type;
+	    print $number, '">[IETF web site]</A>';
+
+	    $printed_link = 1;
+	}
+    }
+
+    if ($printed_link)
+    {
+	print "\n";
+    }
+
+    # Reset number so subsequent newlines won't re-generate the links
+    $number = 0;
+
+    # No need to reset @suffixes.  We've shifted all of its values out
+    # as a part of generating the output
+}
+
+# Variables used to drive conversion
+#
+# title_string - the title put on the generated HTML page
+# key_string - a string to look for in the text index to indicate
+#     that the list of documents is following.  All text prior to
+#     this is copied to the HTML file without modification
+# doc_type - The document-name prefix.  Filenames consist of this
+#     prefix followed by the document number
+# doc_path - A path prefixed to each document name
+# no_ietf - Suppress generation of IETF links for this file
+#
+$title_string = "RFC Index";
+$key_string = "RFC INDEX";
+$doc_type = "rfc";
+$doc_path = "";
+$no_ietf = "";
+
+# This changes from 0 to 1 when we find the key string.  Initialize it
+# to 0
+#
+$key_string_seen = 0;
+
+getopts('bfirs');
+
+if ($opt_b)
+{
+    $title_string = "BCP Index";
+    $key_string = "BCP INDEX";
+    $doc_type = "bcp";
+    $doc_path = "bcp/";
+    $no_ietf = "";
+}
+
+if ($opt_f)
+{
+    $title_string = "FYI Index";
+    $key_string = "FYI INDEX";
+    $doc_type = "fyi";
+    $doc_path = "fyi/";
+    $no_ietf = "";
+}
+
+if ($opt_i)
+{
+    $title_string = "IEN Index";
+    $key_string = "IEN INDEX";
+    $doc_type = "ien";
+    $doc_path = "ien/";
+    $no_ietf = "1";
+
+    # IEN index has no key string, so don't go looking for one
+    #
+    $key_string_seen = 9999;
+}
+
+# No action for $opt_r - that's the default
+
+if ($opt_s)
+{
+    $title_string = "STD Index";
+    $key_string = "STD INDEX";
+    $doc_type = "std";
+    $doc_path = "std/";
+    $no_ietf = "";
+}
+
+
+# Get in-file
+#
+if (@ARGV)
+{
+    $ARGV = shift @ARGV;
+
+    open STDIN, "<$ARGV" or die "Can't redrect stdin to $ARGV\n";
+
+    if (@ARGV)
+    {
+	$ARGV = shift @ARGV;
+	open STDOUT, ">$ARGV" or die "Can't redirect stdout to $ARGV\n";
+    }
+}
+
+
+# Output an HTML header to stdout, followed by a <PRE> tag
+
+print "<HTML><HEAD><TITLE>$title_string</TITLE></HEAD>\n";
+print "<BODY>\n";
+print "<PRE>\n";
+
+# Now, loop across the input file, copying all lines from the start
+# until the second occurrence of the key string (e.g. "RFC INDEX")
+
+while ((defined($_ = <STDIN>)) && ($key_string_seen < 2))
+{
+    if ( /$key_string/ )
+    {
+	$key_string_seen++;
+    }
+
+    # Convert &, < and > to &amp; &lt; and &gt; for HTML
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+    print $_;
+}
+
+s/&/&amp;/g;
+s/</&lt;/g;
+s/>/&gt;/g;
+print $_;
+
+# Now loop through, outputting lines, but treat each line beginning
+# with digits separately, to generate the hyperlinks
+#
+# The algorithm is as follows:
+# * A line that begins with a number will capture that number for
+#   later use
+# * The string (which may be multi-line) of the format:
+#       (Format: ...)
+#   is parsed.  We're looking for sub-strings of the form:
+#       {whitespace}{alphabetics}=
+#   The alphabetics are converted to lower-case to form filename
+#   extensions
+# * When we get to a blank line, generate a line of the form:
+#       [txt] [pdf] [IETF web site]
+#   Containing links to the respective document types
+
+$number = 0;
+@suffixes = ();
+$line = "";
+
+while (defined($_ = <STDIN>))
+{
+    # Strip trailing whitespace
+    s/\s+$//;
+
+    # Sanitize &, < and > for HTML
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+
+    # Concatenate the line for later processing
+    $line .= $_;
+
+    # If this is a blank line, then do our processing to generate and
+    # output the links
+
+    if ($_ eq "")
+    {
+	# Convert all whitespace to single spaces
+	$line =~ s/\s+/ /g;
+
+	# If the line begins with digits, extract the number
+	if (($num) = $line =~ /^([0-9]+)\s+/ )
+	{
+	    ($number) = $num =~ /([1-9][0-9]*)/;
+	}
+
+	# Extract all the text in the (Format: ...) list.  Include the
+	# keyword and the parentheses.  We need them for some cases
+	#
+	($formats) = $line =~ /(\(Format: .*?\))/;
+
+	# Extract suffixes from the formats.
+	#
+	# The STD index uses the old format, which is:
+	#    Format: TXT=1234 HTML= bytes
+	#
+	# Strings with a trailing "=1234" exist as local files.
+	# Strings without it don't
+	#
+	# The other indices use a newer format, which is:
+	#    Format: TXT, HTML, PDF
+	#
+	# In order to support both, we use two regular expression matches.
+	# The first looks for strings of the form FOO=1234
+	#
+	# The second looks for strings of the form FOO, or FOO).  The
+	# trailing comma or close-paren distinguishes it from the
+	# first form.  Also, we only look for upper-case, to avoid
+	# catching the string "bytes", used at the end of the first form
+
+	@suffixes = $formats =~ /([A-Z]+)\s*=\s*[0-9]+/g;
+
+	@moresuffixes = $formats =~ /([A-Z]+)\s*[,\)]/g;
+	@suffixes = (@suffixes, @moresuffixes);
+
+	# TODO: IENs need special handling.  Those with PDFs are not
+	# indicated as such in the index.  We need to actually look for
+	# the file to generate these links
+
+	# If we have a number, then write the links.
+	if ($number > 0)
+	{
+	    write_links();
+	}
+	$line = "";
+    }
+
+    # Write the line to the output.  Note that we're doing it after
+    # the processing.  We've alredy output the actual text, so this
+    # will be a blank line if there was any processing and we want our
+    # links to come before that blank line.
+
+    print "$_\n";
+}
+
+if ($number > 0)
+{
+    # The file ended without a blank line so we couldn't write the
+    # last set of links.  Do it now
+    #
+    write_links();
+}
+
+# And we're done
+
+print "</PRE>\n";
+print "</BODY>\n";
+print "</HTML>\n";

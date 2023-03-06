@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# Note that the BASH shell is critical, because some shells (like debian's
+# dash) don't support GLOBIGNORE
+
+# Use rsync to update our cache of RFCs, drafts, etc.
+#
+# See http://www.rfc-editor.org/rsync-help.html for the documentation
+# used to make this script
+
+# Key paths used by this script
+#
+# IETF_ROOT  - The root directory under-which all the sync'ed documents will
+#              be stored.  Only change this if you want to change the location.
+# RFC_ROOT   - The root directory under which the RFCs will be stored.
+# DRAFT_ROOT - The root directory under which drafts will be stored
+#
+IETF_ROOT=$HOME/public_html/standards/ietf
+RFC_ROOT=$IETF_ROOT/rfcs
+DRAFT_ROOT=$IETF_ROOT/drafts
+
+# First, sync the /rfcs directory.  Create a synlink for the RFC index, with a
+# version beginning with a "1", to make it easier to quickly load that file.
+#
+echo 'Syncing RFCs from the IETF'
+echo ''
+rsync -avz --delete ftp.rfc-editor.org::rfcs $RFC_ROOT
+cd $RFC_ROOT
+
+echo ''
+echo 'Generating HTML versions of the BCP, FYI, IEN, RFC and STD indices'
+rfc_index_to_html -b bcp-index.txt bcp-index.html
+rfc_index_to_html -f fyi-index.txt fyi-index.html
+rfc_index_to_html -i ien-index.txt ien-index.html
+rfc_index_to_html -r rfc-index.txt rfc-index.html
+rfc_index_to_html -s std-index.txt std-index.html
+
+# Create symlinks to put the indices at the top of the list.  1 is
+# RFC, 2 for STD, 3 for BCP, 4 for FYI, 5 for IEN, to allow quick
+# shell expansion of the index
+ln -s rfc-index.txt 1rfc-index.txt
+ln -s std-index.txt 2std-index.txt
+ln -s bcp-index.txt 3bcp-index.txt
+ln -s fyi-index.txt 4fyi-index.txt
+ln -s ien-index.txt 5ien-index.txt
+
+# Next, sync the drafts.  First, rsync the drafts to the archive, so we can
+# preserve any expired drafts.  Then sync from the IETF using the --delete
+# option.  The idea here is that $DRAFTS_DIR should contain a mirror of the
+# IETF server while $DRAFTS_ARCHIVE should include expired drafts.  We don't
+# want to keep expired drafts in $DRAFTS_DIR because it can take a long time to
+# search/sort a directory that large.
+#
+# Note also that we're sorting out the drafts in the archive.  IETF drafts in
+# $DRAFTS_ARCHIVE_IETF and named drafts in $DRAFTS_ARCHIVE_NAMED, with the
+# remaining non-draft files in $DRAFTS_ARCHIVE.  We also deliberately ignore
+# all files with a "p7s" extension (authentication digests of each draft.)
+# This is because of the sheer quantity of files in the archive (currently over
+# 82K, and over 3MB of characters in the filenames), which exceeds the maximum
+# supported by many file systems.  By splitting up IETF and named drafts, the
+# amount per directory is cut approximately in half, solving the problem, at
+# least for now.
+#
+# The GLOBIGNORE expression is part of the bash shell.  It is a list of
+# patterns that the "*" expresionw will not affects how the "*" wildcard will
+# not match.  The expressions used below are:
+#
+# *.p7s                    - authentication digests for drafts
+# $DRAFTS_DIR/draft-ietf-* - IETF drafts (for archiving named drafts)
+# $DRAFTS_DIR/draft-*      - all drafts (for archiving non-draft files)
+# $DRAFTS_DIR/1id-*        - Draft index files (meaningless in the archive)
+# $DRAFTS_DIR/all_id*      - Database versions of the draft indices
+#
+# Note also that we back up the drafts to the archive twice.  Before the sync
+# from the IETF, to preserve anything that might get deleted, and then
+# afterward to make sure it contain any newly downloaded drafts.  This is
+# typically redundant, but it will ensure that any manual (that is, not sync'ed
+# from the IETF) changes we make will get backed up.
+
+# Directories used for drafts:
+#
+# DRAFTS_DIR           - Current drafts.  Mirrored from the IETF site
+# DRAFTS_ARCHIVE       - Archive.  Includes expired drafts we've previously
+#                        downloaded
+# DRAFTS_ARCHIVE_IETF  - The "ietf" (working group) drafts in the archive
+# DRAFTS_ARCHIVE_NAMED - The "named" (individual) drafts in the archive
+#
+DRAFTS_DIR=$DRAFT_ROOT/drafts
+DRAFTS_ARCHIVE=$DRAFT_ROOT/Archive
+DRAFTS_ARCHIVE_IETF=$DRAFTS_ARCHIVE/ietf
+DRAFTS_ARCHIVE_NAMED=$DRAFTS_ARCHIVE/named
+
+echo ''
+echo '================================================================='
+echo ''
+echo 'Syncing drafts'
+echo ''
+echo 'Backing up drafts to Archive'
+echo ''
+echo '... IETF drafts'
+GLOBIGNORE='*.p7s'
+rsync -avz $DRAFTS_DIR/draft-ietf-* $DRAFTS_ARCHIVE_IETF
+echo '... named drafts'
+GLOBIGNORE=$DRAFTS_DIR'/draft-ietf-*:*.p7s'
+rsync -avz $DRAFTS_DIR/draft-* $DRAFTS_ARCHIVE_NAMED
+echo '... non-draft files'
+GLOBIGNORE=$DRAFTS_DIR'/draft-*:*.p7s:'$DRAFTS_DIR'/1id-*:'$DRAFTS_DIR'/all_id*'
+rsync -avz $DRAFTS_DIR/* $DRAFTS_ARCHIVE
+unset GLOBIGNORE
+
+echo ''
+echo 'Syncing drafts from the IETF'
+echo ''
+rsync -avz --delete ftp.rfc-editor.org::internet-drafts $DRAFTS_DIR
+
+echo ''
+echo 'Backing up drafts to Archive again'
+echo ''
+echo '... IETF drafts'
+GLOBIGNORE='*.p7s'
+rsync -avz $DRAFTS_DIR/draft-ietf-* $DRAFTS_ARCHIVE_IETF
+echo '... named drafts'
+GLOBIGNORE=$DRAFTS_DIR'/draft-ietf-*:*.p7s'
+rsync -avz $DRAFTS_DIR/draft-* $DRAFTS_ARCHIVE_NAMED
+echo '... non-draft files'
+GLOBIGNORE=$DRAFTS_DIR'/draft-*:*.p7s:'$DRAFTS_DIR'/1id-*:'$DRAFTS_DIR'/all_id*'
+rsync -avz $DRAFTS_DIR/* $DRAFTS_ARCHIVE
+unset GLOBIGNORE
+
+# Generate the HTML version of the draft index
+echo ''
+echo 'Generating HTML version of the draft index'
+cd $DRAFTS_DIR
+draft_index_to_html 1id-index.txt 1id-index.html
+
+echo ''
+echo 'Done.'

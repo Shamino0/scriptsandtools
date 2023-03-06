@@ -1,0 +1,203 @@
+#!/usr/bin/perl
+
+# Ediff a file against its head-of-line rev in git, or against a specific
+# commitvision, or two revisions against each other.
+#
+# usage: gitediff <file>[#<rev>] [<file>[#<rev>] ...]
+#
+# gitediff foo - compare foo against the latest version committed to git (HEAD)
+#
+# gitediff foo#<ver> - compare foo against the version <ver>
+#
+# gitediff foo#<ver1>#<ver2> - compare foo version <ver1> against version <ver2>
+#
+# versions <ver> may be any git revision spec string or a negative integer.
+#
+# negative integers reflect most recent "nth" version.  For instance -1
+# represents HEAD (same as omitting the number.)  -5 represents the fifth most
+# recent version of the file.  Note that this is NOT the same as HEAD~5.
+# HEAD~5 represents the version as of the fifth most recent commit, which is
+# not necessarily the fifth most recent version of the file itself.
+
+use Cwd 'abs_path';
+use File::Basename;
+use File::Spec;
+
+
+# get_git_file <tmp_filename> <git_filename> [<ver>]
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file
+{
+    my($tmp_filename) = shift(@_);
+    my($filename)     = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    if ($ver =~ /^-/)
+    {
+	# Version begins with "-" - it's a negative number.  Go searching for
+	# revisions
+
+	my($count) = abs($ver);
+	if ($count == 0)
+	{
+	    print "Version offset is zero or non-numeric.  Using HEAD\n";
+	    return get_git_file_revision($tmp_filename, $git_filename, "");
+	}
+
+	# Do a "git log", piping the output.  Search for strings beginning
+	# with "commit", getting the commit numbers.  When we see the nth
+	# commit, or if we run out of commits, use what we found
+
+	my($commitnum);
+
+	open COMMITLIST, "git log $filename |"
+	    or die "Can't git log $filename into a pipe";
+	while(<COMMITLIST>)
+	{
+	    if (/^commit /)
+	    {
+		chomp;
+		s/^commit //;
+		$commitnum = $_;
+
+		$count--;
+		if ($count == 0)
+		{
+		    # Use this commit number
+		    my($ret) = close COMMITLIST;
+		    if (($ret == 0) && ($! != 0))
+		    {
+			die "Can't close pipe from git";
+		    }
+		
+		    return get_git_file_revision($tmp_filename, $git_filename,
+						 $commitnum);
+		}
+	    }
+	}
+	close COMMITLIST or die "Can't close pipe from git";
+
+	# Ran out of commits, use the last one
+	return get_git_file_revision($tmp_filename, $git_filename, $commitnum);
+    }
+    else
+    {
+	# Version doesn't begin with "-" - use it as the version
+
+	get_git_file_revision($tmp_filename, $git_filename, $ver);
+    }
+}
+
+# get_git_file_revision <tmp_filename> <git_filename> [<ver>]
+#
+# Get a git file to a temporary filename using a git revision spec only
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file_revision
+{
+    my($tmp_filename) = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    open WRITESTATUS, "> $tmp_filename" or die "Can't open temp file";
+
+    if ($ver eq "")
+    {
+	open READSTATUS, "git show :$git_filename |"
+	    or die "Can't git show :$git_filename into a pipe";
+    }
+    else
+    {
+	open READSTATUS, "git show $ver:$git_filename |"
+	    or die "Can't git show $ver:$git_filename into a pipe";
+    }
+
+    while (<READSTATUS>)
+    {
+	print WRITESTATUS;
+    }
+    close READSTATUS;
+    close WRITESTATUS;
+}
+
+if (!@ARGV)
+{
+    print "Usage: gitediff <file>[[#<rev>]#<rev>] [<file>[[#rev]#<rev>] ...]\n";
+    exit 1;
+}
+
+# Get the git-root.
+chomp($git_root = `git rev-parse --show-toplevel`);
+
+# Loop through all the files...
+
+while (@ARGV)
+{
+    # For each arg, split it into filename, and versions
+
+    $arg = shift @ARGV;
+    ($filename, $ver1, $ver2) = split /\#/, $arg;
+
+    # Make the filename into an absolute path, then relative to the git-root
+    $git_filename = abs_path($filename);
+    $git_filename = File::Spec->abs2rel($git_filename, $git_root);
+    $basename = fileparse($filename);
+
+    # Get an input filename relative to CWD, for output purposes only
+    $display_filename = File::Spec->abs2rel($filename);
+
+    if ($ver1 eq "")
+    {
+	# Diff file against HEAD
+	print "Ediff $display_filename against HEAD\n";
+
+	# Do a "git show" to get the file, redirected to a temporary file
+
+	$tmpfilename = "/tmp/gitediff_" . $$ . "_$basename";
+
+	get_git_file($tmpfilename, $filename, $git_filename);
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$tmpfilename\" \"$filename\")");
+	unlink $tmpfilename;	
+    }
+    elsif ($ver2 eq "")
+    {
+	# Diff file against specific revision
+	print "Ediff $display_filename against revision $ver1\n";
+
+	$tmpfilename = "/tmp/gitediff_" . $$ . "_$basename";
+	get_git_file($tmpfilename, $filename, $git_filename, $ver1);
+
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$tmpfilename\" \"$filename\")");
+	unlink $tmpfilename;
+    }
+    else
+    {
+	# Diff two versions against each other
+	print "Ediff $display_filename revision $ver1 against revision $ver2\n";
+
+	$tmpfilename1 = "/tmp/gitediff_1_" . $$ . "_$basename";
+	$tmpfilename2 = "/tmp/gitediff_2_" . $$ . "_$basename";
+
+	get_git_file($tmpfilename1, $filename, $git_filename, $ver1);
+	get_git_file($tmpfilename2, $filename, $git_filename, $ver2);
+	
+	system ("emacs",
+		"--eval",
+		"(ediff-files \"$tmpfilename2\" \"$tmpfilename1\")");
+	unlink $tmpfilename1;
+	unlink $tmpfilename2;
+    }
+}

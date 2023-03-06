@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# etags -S `find . -name '*.h' -print`
+# etags -Sa `find . -name '*.c' -print`
+# etags -Sa `find . -name '*.cc' -print`
+# etags -Sa `find . -name '*.cpp' -print`
+# etags -Sa `find . -name '*.def' -print`
+
+rm -f TAGS
+find . -name '*.[ch]' -print0 -o -name '*.cc' -print0 -o -name '*.cpp' -print0 -o -name '*.def' | xargs -0 etags -Sa

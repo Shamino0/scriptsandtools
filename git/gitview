@@ -1,0 +1,174 @@
+#!/usr/bin/perl
+
+# View a specific version of a file from a git repo in Emacs.
+#
+# usage: gitview <file>[#<rev>] [<file>[#<rev>] ...]
+#
+# gitview foo - Load the selected file into an editor.  Effectively
+#               just launching Emacs against the file
+#
+# gitediff foo#<ver> - Load a specified version of the file into an editor
+#
+# versions <ver> may be any git revision spec string or a negative integer.
+#
+# negative integers reflect most recent "nth" version.  For instance -1
+# represents HEAD (same as omitting the number.)  -5 represents the fifth most
+# recent version of the file.  Note that this is NOT the same as HEAD~5.
+# HEAD~5 represents the version as of the fifth most recent commit, which is
+# not necessarily the fifth most recent version of the file itself.
+
+use Cwd 'abs_path';
+use File::Basename;
+use File::Spec;
+
+
+# get_git_file <tmp_filename> <git_filename> [<ver>]
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file
+{
+    my($tmp_filename) = shift(@_);
+    my($filename)     = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    if ($ver =~ /^-/)
+    {
+	# Version begins with "-" - it's a negative number.  Go searching for
+	# revisions
+
+	my($count) = abs($ver);
+	if ($count == 0)
+	{
+	    print "Version offset is zero or non-numeric.  Using HEAD\n";
+	    return get_git_file_revision($tmp_filename, $git_filename, "");
+	}
+
+	# Do a "git log", piping the output.  Search for strings beginning
+	# with "commit", getting the commit numbers.  When we see the nth
+	# commit, or if we run out of commits, use what we found
+
+	my($commitnum);
+
+	open COMMITLIST, "git log $filename |"
+	    or die "Can't git log $filename into a pipe";
+	while(<COMMITLIST>)
+	{
+	    if (/^commit /)
+	    {
+		chomp;
+		s/^commit //;
+		$commitnum = $_;
+
+		$count--;
+		if ($count == 0)
+		{
+		    # Use this commit number
+		    my($ret) = close COMMITLIST;
+		    if (($ret == 0) && ($! != 0))
+		    {
+			die "Can't close pipe from git";
+		    }
+		
+		    return get_git_file_revision($tmp_filename, $git_filename,
+						 $commitnum);
+		}
+	    }
+	}
+	close COMMITLIST or die "Can't close pipe from git";
+
+	# Ran out of commits, use the last one
+	return get_git_file_revision($tmp_filename, $git_filename, $commitnum);
+    }
+    else
+    {
+	# Version doesn't begin with "-" - use it as the version
+
+	get_git_file_revision($tmp_filename, $git_filename, $ver);
+    }
+}
+
+# get_git_file_revision <tmp_filename> <git_filename> [<ver>]
+#
+# Get a git file to a temporary filename using a git revision spec only
+#
+# where:
+#     tmp_filename is the file that the git-file will be written to
+#     git_filename is the git-path to the file we're fetching
+#     ver, if provided, is the git revision string
+sub get_git_file_revision
+{
+    my($tmp_filename) = shift(@_);
+    my($git_filename) = shift(@_);
+    my($ver)          = shift(@_);
+
+    open WRITESTATUS, "> $tmp_filename" or die "Can't open temp file";
+
+    if ($ver eq "")
+    {
+	open READSTATUS, "git show :$git_filename |"
+	    or die "Can't git show :$git_filename into a pipe";
+    }
+    else
+    {
+	open READSTATUS, "git show $ver:$git_filename |"
+	    or die "Can't git show $ver:$git_filename into a pipe";
+    }
+
+    while (<READSTATUS>)
+    {
+	print WRITESTATUS;
+    }
+    close READSTATUS;
+    close WRITESTATUS;
+}
+
+if (!@ARGV)
+{
+    print "Usage: gitview <file>[#<rev>] [<file>[#rev] ...]\n";
+    exit 1;
+}
+
+# Get the git-root.
+chomp($git_root = `git rev-parse --show-toplevel`);
+
+# Loop through all the files...
+
+while (@ARGV)
+{
+    # For each arg, split it into filename, and versions
+
+    $arg = shift @ARGV;
+    ($filename, $ver) = split /\#/, $arg;
+
+    # Make the filename into an absolute path, then relative to the git-root
+    $git_filename = abs_path($filename);
+    $git_filename = File::Spec->abs2rel($git_filename, $git_root);
+    $basename = fileparse($filename);
+
+    # Get an input filename relative to CWD, for output purposes only
+    $display_filename = File::Spec->abs2rel($filename);
+
+    if ($ver eq "")
+    {
+	# Load the file into Emacs
+	print "Loading $display_filename\n";
+
+	system ("emacs", "$filename");
+    }
+    else
+    {
+	# Get the specified version and load it into Emacs
+	print "Loading $display_filename revision $ver\n";
+
+	$tmpfilename = "/tmp/gitview_" . $$ . "_$basename";
+
+	get_git_file($tmpfilename, $filename, $git_filename, $ver);
+	
+	system ("emacs", "$tmpfilename");
+	unlink $tmpfilename;
+    }
+}

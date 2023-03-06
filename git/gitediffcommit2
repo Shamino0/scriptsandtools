@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Get all the differences between a specific commit and the current files or
+# between two commits and ediff them all.
+#
+# Usage:
+#    gitedittcommit2 <commit_no> [<commit_no>]
+#
+# Where:
+#     <commit_no> is a git commit number we're investigating
+#
+# If two <commit_no> items are provided, we will compare the changes between
+# these two commits.  If only one is provided, the changes from that commit to
+# the currently-visible files will be presented.
+#
+# This script will, for each file in the commit, call:
+#     gitediff <file>#<commit_no>#<commit_no>
+
+if [ -z "$1" ]; then
+    # No arguments.  Dump usage and exit
+    echo 'usage: gitediffcommit2 <commit_no> [<commit_no>]'
+    exit
+fi
+
+# Get the git root and quote all the forward slashes...
+GIT_ROOT=`git rev-parse --show-toplevel | sed 's&/&\\\\/&g'`
+
+# echo GIT_ROOT is $GIT_ROOT
+
+# Quote forward slashes in the commit number so we can use branch
+# names that have slashes
+COMMIT1="$1"
+QUOTED_COMMIT1=`echo $COMMIT1 | sed 's&/&\\\\/&g'`
+
+if [ -z "$2" ]; then
+    # Do the "git show" three times, looking for different filename-header
+    # lines.  "diff --git", "diff --cc" and "diff --combined" could all be
+    # found
+    #
+    DIFFS=`git diff "$COMMIT1" | grep '^diff --git a/'`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to: sed 's/.* b\/\(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/.* b\/\(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+
+    DIFFS=`git diff "$COMMIT1" | grep '^diff --cc '`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to sed 's/^diff --cc \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/^diff --cc \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+
+    DIFFS=`git diff "$COMMIT1" | grep '^diff --combined '`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to sed 's/^diff --combined \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/^diff --combined \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+
+else
+    COMMIT2="$2"
+    QUOTED_COMMIT2=`echo $COMMIT2 | sed 's&/&\\\\/&g'`
+
+    DIFFS=`git diff "$COMMIT1" "$COMMIT2" | grep '^diff --git a/'`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to sed 's/.* b\/\(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/.* b\/\(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+
+    DIFFS=`git diff "$COMMIT1" "$COMMIT2" | grep '^diff --cc '`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to sed 's/^diff --cc \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/^diff --cc \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+
+    DIFFS=`git diff "$COMMIT1" "$COMMIT2" | grep '^diff --combined '`
+    if [ -n "$DIFFS" ]; then
+	# echo sending diffs to sed 's/^diff --combined \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/'
+	echo "$DIFFS" | \
+	    sed 's/^diff --combined \(.*\)/'"$GIT_ROOT"'\/\1#'"$QUOTED_COMMIT2"'#'"$QUOTED_COMMIT1"'/' | \
+	    xargs gitediff
+    fi
+fi

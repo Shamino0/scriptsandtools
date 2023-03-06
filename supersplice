@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# go through a list of files, applying a regexp against them all
+#
+# usage: supersplice <regex> file [file...]
+
+if ( [ -z $2'' ];) then
+    echo 'usage: supersplice <regex> file [file...]'
+    exit
+fi
+
+tempfile=/tmp/supersplice.temp.$$
+
+regex=$1
+shift 1
+
+for i in $*; do
+    if ( sed "$regex" $i > $tempfile; ) then 
+	cp $tempfile $i
+	rm $tempfile
+    fi
+done

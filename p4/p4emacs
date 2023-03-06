@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Do a "p4 edit" followed by an Emacs edit of a list of files
+#
+# usage: p4emacs file [file...]
+
+if ( [ -z $1'' ];) then
+    echo 'usage: p4emacs file [file...]'
+    exit
+fi
+
+p4 edit $*
+emacs $*
