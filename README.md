@@ -52,3 +52,10 @@ permanent damage if you make a mistake.
 I recommend only using this script on files that are managed under a version
 control system (e.g. git) and only use it after preserving the prior versions
 (e.g. with a `git add` command), so you can undo any possible mistakes.
+
+## Vacation calendar generator
+
+A JavaScript library for generating a calendar that tracks used and remaining
+paid time-off based on a list of provided dates.
+
+[Vacation calendar](vacation_calendar/README.md)

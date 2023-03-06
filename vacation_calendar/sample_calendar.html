@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+<META http-equiv="Content-type" content="text/html;charset=ISO-8859-1">
+<SCRIPT SRC="calendar_generator.js"></SCRIPT>
+
+<TITLE ID="DocTitle">noname's PTO for noyear</TITLE>
+</HEAD>
+<BODY TEXT='#000000' BGCOLOR='FFFFFF'>
+<P></P>
+<SCRIPT>
+var company="My Company"
+var name="My Name"
+var year=2023
+
+// Count of available paid time-off for the year, in days
+//
+var pto_counts =
+{
+    // Floating holidays
+    floating                :  2,
+
+    // Personal leave
+    personal                :  2,
+    
+    // Sick leave
+    sick                    :  5,
+
+    // Vacation
+    vacation                : 10,
+
+    // Volunteer leave
+    volunteer               : 1,
+
+    /*
+     * True means vacation accrues per pay period (2 or 3 periods per month, as
+     * specified below)
+     *
+     * False means all vacation is block-granted on January 1st for the entire
+     * year
+     */
+    vacation_accrual        : true,
+
+    /*
+     * True means sick leave accrues per pay period (2 or 3 periods per month,
+     * as specified below)
+     *
+     * False means all sick leave is block-granted on January 1st for the
+     * entire year
+     */
+    sick_accrual            : false,
+
+    // Maximum amount of vacation you can carry over to the next year
+    varation_carryover_limit : 5,
+
+    // Maximum amount of sick leave you can carry over to the next year
+    sick_carryover_limit     : 5,
+
+    // Amount of vacation carried over from the previous year
+    vacation_carryin        : 3.5,
+
+    // Amount of sick leave carried over from the previous year
+    sick_carryin            : 1,
+
+    // The maximum amount of vacation that can be accrued before accrual stops
+    max_vacation_accrual    : 20,
+
+    // The maximum amount of sick leave that can be accrued before accrual
+    // stops
+    max_sick_accrual        : 10,
+    
+};
+
+/*
+ * If you are paid biweekly, then in any given year, two (rarely three) months
+ * will have three paychecks (and therefore three days where vacation accrues).
+ * Rather than attempt to compute these dates, this variable specifies the
+ * months that have three paychecks. 
+ *
+ * If you are paid bimonthly, then this array should be empty, because there
+ * will be no three-check months
+ *
+ * This script does not currently support weekly accrual
+ *
+ * For 2023, if you are paid on Fridays and the first paycheck of the year is
+ * January 13, then the three-check months will be June and December
+ */
+var three_check_months = [ 6, 12 ];
+
+/*
+ * Definition of all your time off (company holidays, vacation, sick leave,
+ * etc.)
+ *
+ * Each row is one day off.  Each field is an array of values:
+ *
+ * month       - Month of the PTO (1=January ... 12=December)
+ * day         - Days of the PTO
+ * PTO type    - The following codes are currently recognized (see also
+ *               comments for the function generate_pto_database in
+ *               calendar_generator.js)
+ *                b  = Bereavement leave
+ *                f  = Floating holiday (will decrement from total count)
+ *                h  = Company holiday
+ *                p  = Personal leave
+ *                s  = Sick leave
+ *                v  = Vacation
+ *                vo = Volunteer leave
+ *                w  = Working day.  Used when a weekend (normally time off) is
+ *                     a work day.  This sometimes happens in some countries
+ *                     (e.g. in China)
+ * Days        - The amount of time off taken.  Normally this will be 1 or a
+ *               fraction.  Negative values and numbers greater than 1 may be
+ *               used to apply corrections to the total counts for unusual
+ *               circumstances that this scrips is not able to handle.  Zero
+ *               may be used to add a description tool-tip to a work day or a
+ *               weekend without affecting the total counts.
+ * Description - A description of the time off.  Will appear in the generated
+ *               calendar as a tool-tip.
+ */
+var pto_data = [
+    [ 1,  2, "h",  1,    "New Years Day (observed)"],
+    [ 1,  9, "s",  1,    "Sick with the flu"],
+    [ 1, 16, "f",  1,    "Martin Luterh King Day"],
+    [ 2,  2, "s",  0.25, "Dentist's appointment"],
+    [ 2, 20, "f",  1,    "President's Day"],
+    [ 5, 25, "p",  1,    "Family wedding"],
+    [ 5, 26, "p",  1,    "Family wedding"],
+    [ 5, 29, "h",  1,    "Memorial Day"],
+    [ 5, 30, "v",  1,    "Family wedding"],
+    [ 5, 31, "v",  1,    "Family wedding"],
+    [ 7,  3, "v",  1,    "Taking a long July 4th weekend"],
+    [ 7,  4, "h",  1,    "Independence Day"],
+    [ 8, 10, "s",  0.25, "Dentist's appointment"],
+    [ 9,  1, "s",  0.5,  "Eye exam.  Can't work afterward"],
+    [ 9,  4, "h",  1,    "Labor Day"],
+    [10,  9, "v",  1,    "Columbus Day"],
+    [11, 22, "vo", 1,    "Volunteer at community soup kitchen"],
+    [11, 23, "h",  1,    "Thanksgiving"],
+    [11, 24, "v",  1,    "Day after Thanksgiving"],
+    [12, 22, "h",  1,    "Christmas eve (observed)"],
+    [12, 25, "h",  1,    "Christmas"],
+    [12, 26, "v",  1,    "Family trip"],
+    [12, 27, "v",  1,    "Family trip"],
+    [12, 28, "v",  1,    "Family trip"],
+    [12, 29, "v",  1,    "Family trip"],
+];
+
+set_name_and_year(name, year);
+generate_body(company, name, year, pto_counts, pto_data, three_check_months);
+</SCRIPT>
