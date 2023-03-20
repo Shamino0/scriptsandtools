@@ -10,7 +10,7 @@ specific versions of files and comparing them using Emacs.
 * [p4lastchange](#p4lastchange)
 * [p4lastchange_thisdir](#p4lastchange_thisdir)
 
-# `p4ediff`
+## `p4ediff`
 
 Compare a file against some version from its Perforce history, or compare two
 historic versions of a file.  The two versions are loaded into GNU Emacs and an
@@ -42,7 +42,7 @@ Where:
     * `<rev>` represents a revision of the file.  An integer representing a
       version number on the current branch.
 
-# `p4ediff3`
+## `p4ediff3`
 
 Perform a 3-way diff against a local file and two revisions from its Perforce
 history, or compare two historic versions of a file.  The three versions are
@@ -61,19 +61,19 @@ Where:
 * `<rev>` represents a revision of the file.  An integer representing a version
   number on the current branch.
 
-# `p4emacs`
+## `p4emacs`
 
 Check out one or more files from Perforce and load them into GNU Emacs for
 editing.
 
 Usage: `p4emacs <file> [<file> ...]`
 
-# `p4lastchange`
+## `p4lastchange`
 
 Get information about the last change committed to the current Perforce code
 depot.
 
-# `p4lastchange_thisdir`
+## `p4lastchange_thisdir`
 
 Get information about the last change committed to the current Perforce code
 depot for the current directory only.

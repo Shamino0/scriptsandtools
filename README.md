@@ -17,6 +17,12 @@ using Emacs.
 
 [Git scripts](git/README.md)
 
+## C tools
+
+Some simple tools written in C.  Including a Makefile to compile them
+
+[C tools](c_tools/README.md)
+
 ## IETF scripts
 
 Two scripts that work together for keeping a local mirror of the IETF RFCs,

@@ -10,7 +10,7 @@ using Emacs.
 * [gitediffcommit2](#gitediffcommit2)
 * [gitview](#gitview)
 
-# `gitediff`
+## `gitediff`
 
 Compare a file against some version from its `git` history, or compare two
 historic versions of a file.  The two versions are loaded into GNU Emacs and an
@@ -89,7 +89,7 @@ Some examples may help:
   Compare the version of `foo.c` at the head of `release4branch` against the
   version at the head of `release5branch`
 
-# `gitediff2`
+## `gitediff2`
 
 Compare two arbitrary files, allowing `git` revisions to be specified for each.
 The two files are loaded into GNU Emacs and an `ediff-buffers` command is
@@ -113,7 +113,7 @@ Where:
     
     See [gitediff](#gitediff), above, for the `#<rev>` syntax.
 
-# `gitediffcommit`
+## `gitediffcommit`
 
 View all of the changes corresponding to a single `git` commit, either
 comparing each file against its immediately-prior version against specified
@@ -160,7 +160,7 @@ Some examples may help:
    against its version 5 commits prior to the HEAD.  **IMPORTANT**: This is
    relative to the branch's head, not to the commit being viewed.
 
-# `gitediffcommit2`
+## `gitediffcommit2`
 
 View all of the changes between two `git` commits.  For each file that differs,
 load the two versions into GNU Emacs and use `ediff-commit` to compare them.
@@ -176,7 +176,7 @@ Where:
   differences between the two commits is compared.  If not provided, then the
   specified commit is compared against the local version of each file.
 
-# `gitview`
+## `gitview`
 
 View an arbitrary files, allowing a `git` revision to be specified.  The file
 is loaded into GNU Emacs
