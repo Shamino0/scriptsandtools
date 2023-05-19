@@ -4,6 +4,7 @@ Some simple utilities I've written in C, including a Makefile for compiling
 them.
 
 * [dumpfloat](#dumpfloat)
+* [quaternion_decode](#quaternion_decode)
 
 ## `dumpfloat`
 
@@ -113,4 +114,28 @@ Long double constants:
     LDBL_MIN_10_EXP: -4931
     LDBL_MAX_EXP:    16384
     LDBL_MAX_10_EXP: 4932
+~~~~
+
+## `quaternion_decode`
+
+Decode a device orientation quaternion array into its corresponding Euler
+angles.
+
+The formulas used for the decoding is based on this article: [Inertial Labs:
+Euler and Quaternion Angles: Differences and Why it
+Matters](https://resources.inertiallabs.com/en-us/knowledge-base/euler-and-quaternion-angles-differences-and-why-it-matters)
+
+Usage: `quaternion_decode <q0> <q1> <q2> <q3>`
+
+Where the four parameters (`q0` through `q3`) are floating point numbers
+representing the four quaternion parameters.
+
+### Example
+
+~~~~
+$ quaternion_decode 0.782547 0.014602 -0.005806 -0.622393
+Decode of quaternion: (0.782547, 0.014602, -0.005806, -0.622393)
+Pitch angle: 0.030085 radians = 1.723759 degrees
+Roll angle: 0.009094 radians = 0.521029 degrees
+Heading angle: 1.343926 radians = 77.001280 degrees
 ~~~~
