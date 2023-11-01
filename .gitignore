@@ -3,3 +3,6 @@
 
 # Ignore generated object files
 *.o
+
+# Mac metadata
+.DS_Store
