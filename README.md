@@ -35,6 +35,12 @@ stop now.
 
 [IETF scripts](ietf/README.md)
 
+## Microsoft Office stuff
+
+Some documents I produced that others might find useful.
+
+[Microsoft Office stuff](ms_office/README.md)
+
 ## P4 scripts
 
 Several scripts that I have found useful (in the every-increasingly distant
