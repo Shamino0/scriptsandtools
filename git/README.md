@@ -116,7 +116,7 @@ Where:
 ## `gitediffcommit`
 
 View all of the changes corresponding to a single `git` commit, either
-comparing each file against its immediately-prior version against specified
+comparing each file against its immediately-prior version or against specified
 earlier versions.  For each file in the specified commit, the two appropriate
 versions are loaded into GNU Emacs and an `ediff-buffers` command is executed
 against them.  After Emacs terminates, the next file is compared.
@@ -163,7 +163,7 @@ Some examples may help:
 ## `gitediffcommit2`
 
 View all of the changes between two `git` commits.  For each file that differs,
-load the two versions into GNU Emacs and use `ediff-commit` to compare them.
+load the two versions into GNU Emacs and use `ediff-buffers` to compare them.
 After Emacs terminates, the next file is compared.
 
 Usage: `gitediffcommit2 <commit1> [<commit2>]`
@@ -175,6 +175,22 @@ Where:
 * `<commit2>` is an optional second `git` commit number.  If present, the
   differences between the two commits is compared.  If not provided, then the
   specified commit is compared against the local version of each file.
+  
+It is extremely useful in the following examples:
+
+* `gitediffcommit2 HEAD`
+
+  Show all of the differences between the current working space and the most
+  recent commit on its branch.  When run prior to a `git commit`, it will show
+  all the changes that will be committed, allowing for a quick review prior to
+  committing the changes.
+  
+* `gitediffcommit2 otherbranch`
+
+  Show all the differences between the current working space and the head of
+  the `otherbranch` branch.  This is very useful when manually merging two
+  branches, because you can review the diffs on a per-file basis and make
+  changes to the current working space using the `ediff-buffers` mechanism.
 
 ## `gitview`
 
