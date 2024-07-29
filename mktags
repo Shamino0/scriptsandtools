@@ -1,10 +1,34 @@
 #!/bin/sh
 
-# etags -S `find . -name '*.h' -print`
-# etags -Sa `find . -name '*.c' -print`
-# etags -Sa `find . -name '*.cc' -print`
-# etags -Sa `find . -name '*.cpp' -print`
-# etags -Sa `find . -name '*.def' -print`
+# mktags - Generate "etags" for a directory of C/C++ source files
+#
+# Copyright (C) 2000-2024, David Charlap
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Note: ".def" files are definition files used as templates for generation of
+#       C/C++ source files.  Feel free to remove it from the following
+#       expression if your projects don't do this.  Add other expressions
+#       (e.g. '*.m' for Objective-C or '.C' or '.c++' for other C++ source
+#       extensions) as appropriate for your work.
 
 rm -f TAGS
-find . -name '*.[ch]' -print0 -o -name '*.cc' -print0 -o -name '*.cpp' -print0 -o -name '*.def' | xargs -0 etags -Sa
+find . -name '*.[ch]' -print0 -o   \
+       -name '*.cc'   -print0 -o   \
+       -name '*.cpp'  -print0 -o   \
+       -name '*.cxx'  -print0 -o   \
+       -name '*.hpp'  -print0 -o   \
+       -name '*.hxx'  -print0 -o   \
+       -name '*.def'             | \
+    xargs -0 etags -Sa
