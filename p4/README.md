@@ -1,6 +1,6 @@
 # P4 scripts
 
-Several scripts that I have found useful (in the every-increasingly distant
+Several scripts that I have found useful (in the ever-increasingly distant
 past) while developing software with Perforce.  Mostly packages for fetching
 specific versions of files and comparing them using Emacs.
 

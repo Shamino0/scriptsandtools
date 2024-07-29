@@ -4,9 +4,9 @@ Two scripts that work together for keeping a local mirror of the IETF RFCs,
 drafts and related documents.  Also converts the corresponding index files into
 HTML with links to the docs (suitable for serving by a local web server).
 
-This is probably not necessary, since the IETF provides a great web interface,
-but I've been maintaining this archive for over 20 years and I don't want to
-stop now.
+This is probably not necessary, since the IETF (today) provides a great web
+interface, but I've been maintaining a mirror for over 20 years and I don't
+want to stop now.
 
 Usage: `get-drafts`
 
