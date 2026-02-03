@@ -709,6 +709,22 @@ function generate_pto_database(pto_data)
 }
 
 /*
+ * Generate the navigation links
+ */
+function generate_navigation_links()
+{
+    document.write("<DIV STYLE='float:left;'>\n");
+    document.write("<A HREF='pto" + (year-1) + ".html'>" +
+                   "&lt;&lt;&lt;----- Previous year</A>\n");
+    document.write("</DIV><DIV STYLE='float:right;'>\n");
+    document.write("<A HREF='pto" + (year+1) + ".html'>" +
+                   "Next year -----&gt;&gt;&gt;</A>\n");
+    document.write("</DIV><DIV STYLE='text-align:center;'>\n");
+    document.write("<A HREF='pto.html'>This year</A>\n");
+    document.write("</DIV>\n");
+}
+
+/*
  * THIS IS THE KEY FUNCTION THAT IS USED TO DRIVE EVERYTHING
  *
  * These are the parameters.  Unless otherwise specified, all are
@@ -941,6 +957,8 @@ function generate_body(company, name, year, pto_counts, pto_data,
     pto_remaining.sick     += pto_counts.sick_carryin;
     pto_remaining.vacation += pto_counts.vacation_carryin;
 
+    generate_navigation_links()
+    
     // Generate the outermost table header
     document.write("<TABLE CLASS='calendar' CELLSPACING=10>\n");
     document.write("<CAPTION><H1>" + name + "'s PTO for " +
@@ -1072,19 +1090,8 @@ function generate_body(company, name, year, pto_counts, pto_data,
     document.write("Hover your mouse over a time-off date for an " +
                    "explanation.\n");
     document.write("</P>\n");
-}
 
-/*
- * Edit the containing HTML file, replacing the "DocTitle" element.
- * This way we can change the TITLE element.
- *
- * We're not using this anymore, but keep it around for support of older
- * calendars based on an older version of this script.
- */
-function set_name_and_year(name, year)
-{
-    document.getElementById("DocTitle").innerHTML =
-        name + "'s PTO for " + year;
+    generate_navigation_links()
 }
 
 /*
