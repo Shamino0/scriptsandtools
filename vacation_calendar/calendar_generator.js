@@ -212,7 +212,7 @@ function days_in_month(month, year)
     // 0..11, we can just pass month in, which will do what we want (request
     // day-0 of month+1, yielding the last day of month)
     //
-    return new Date(year, month, 0).getDate();    
+    return new Date(year, month, 0).getDate();
 }
 
 // What day of the week is the first of each month.
@@ -320,6 +320,9 @@ function get_color(day_of_week, pto)
             break;
           case "s":           // Sick
             color = "#FFFF00";
+            break;
+          case "u":           // Unofficial/unpaid time off (not counted)
+            color = "#3F3FFF";
             break;
           case "v":           // Vacation
             color = "#00FF00";
@@ -745,6 +748,7 @@ function generate_pto_database(pto_data)
  *         "h"  - Company holiday
  *         "p"  - Personal leave
  *         "s"  - Sick leave
+ *         "u"  - Unofficial/unpaid (doesn't decrement totals)
  *         "v"  - Vacation
  *         "vo" - Volunteer leave
  *         "w"  - Working day.  Used when a weekend day is a
