@@ -1,0 +1,52 @@
+.calendar {
+    background-color: #AADDFF;
+}
+
+.month {
+    background-color: #DDDDDD;
+}
+
+.workday {
+    background-color: white;
+}
+
+.weekend {
+    background-color: red;
+}
+
+.bereavement {
+    background-color: #AAAAFF;
+}
+
+.floating {
+    background-color: #FF9999;
+}
+
+.holiday {
+    background-color: red;
+}
+
+.personal {
+    background-color: cyan;
+}
+
+.sick {
+    background-color: yellow;
+}
+
+.unofficial {
+    background-color: blue;
+    color: white;
+}
+
+.vacation {
+    background-color: lime;
+}
+
+.volunteer {
+    background-color: #00CCCC;
+}
+
+.alert {
+    color: red;
+}

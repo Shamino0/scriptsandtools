@@ -16,6 +16,29 @@
  */
 
 /*
+ * Background colors dates.  These must match the color in the CSS file, for
+ * best results.  Whenever a date is using less than 100% time, these values
+ * are used to compute the lighter shade of the color.  Otherwise the CSS style
+ * is used.
+ *
+ * Note that these must be in RGB form, since the code to lighten them is
+ * parsing that.
+ */
+var background_colors = {
+    workday     : "#FFFFFF",   // White
+    weekend     : "#FF0000",   // Red
+
+    bereavement : "#AAAAFF",
+    floating    : "#FF9999",
+    holiday     : "#FF0000",
+    personal    : "#00FFFF",
+    sick        : "#FFFF00",
+    unofficial  : "#3F3FFF",
+    vacation    : "#00FF00",
+    volunteer   : "#00CCCC"
+};
+
+/*
  * Call the toFixed method, but then strip trailing zeros and, if
  * one remains, any trailing decimal point.
  *
@@ -55,15 +78,15 @@ function toFixedStripZeros(number, places)
  */
 function generateDaysHours(description, days, places, max)
 {
-    document.write("    " + description + ":");
+    document.write("    " + description + ": ");
     if ((days < 0) || ((typeof max !== 'undefined') && (days > max)))
     {
-        document.write("<FONT COLOR='#FF0000'>");
+        document.write("<SPAN CLASS='alert'>");
     }
     document.write(toFixedStripZeros(days, places));
     if ((days < 0) || ((typeof max !== 'undefined') && (days > max)))
     {
-        document.write("</FONT>");
+        document.write("</SPAN>");
     }
     if (days == 1)
     {
@@ -75,12 +98,12 @@ function generateDaysHours(description, days, places, max)
     }
     if ((days < 0) || ((typeof max !== 'undefined') && (days > max)))
     {
-        document.write("<FONT COLOR='#FF0000'>");
+        document.write("<SPAN CLASS='alert'>");
     }
     document.write(toFixedStripZeros(days * 8, places));
     if ((days < 0) || ((typeof max !== 'undefined') && (days > max)))
     {
-        document.write("</FONT>");
+        document.write("</SPAN>");
     }
     if ((days * 8) == 1)
     {
@@ -232,12 +255,12 @@ function lighten_color(color, days)
     // No adjustment for full-days.  Larger than 1 day is treated as
     // 1 day.
     if (days >= 1)
-        return color;
+        return "";
 
     // No adjustment for negative days.  These are corrections for
     // the counts and really don't reflect reality
     if (days < 0)
-        return color;
+        return "";
 
     /* Split the color string into R, G and B
      *
@@ -283,7 +306,8 @@ function lighten_color(color, days)
 /*
  * Fetch the color corresponding to a particular date
  *
- * TODO: Maybe use CSS for this?  But how would we do lightening?
+ * The output is an array containing a CSS style and a color.  The color is the
+ * empty string if no lightening takes place.
  */
 function get_color(day_of_week, pto)
 {
@@ -292,50 +316,59 @@ function get_color(day_of_week, pto)
      * the weekend checks (obviously)
      */
     if (pto && (pto.type == "w"))
-        return "#FFFFFF";
+        return ["workday", ""];
 
-    // Weekends are red
+    // Weekends
     if ((day_of_week == 0) || (day_of_week == 6))
-        return "#FF0000";
+        return ["weekend", ""];
 
     // A weekday is white (normal working day) unless some other
     // event takes precedence
-    var color = "#FFFFFF";  // Working weekday
+    var style = "workday";
+    var color = background_colors.workday;  // Working weekday
 
     if (pto)
     {
         switch(pto.type)
         {
-          case "b":           // Bereavement
-            color = "#AAAAFF";
+          case "b": // Bereavement
+            style = "bereavement";
+            color = background_colors.bereavement;
             break;
-          case "f":           // Floating holiday
-            color = "#FF9999";
+          case "f": // Floating holiday
+            style = "floating";
+            color = background_colors.floating;
             break;
-          case "h":           // Holiday - Company closed
-            color = "#FF0000";
+          case "h": // Holiday - Company closed
+            style = "holiday";
+            color = background_colors.holiday;
             break;
-          case "p":           // Personal business
-            color = "#00FFFF";
+          case "p": // Personal business
+            style = "personal";
+            color = background_colors.personal;
             break;
-          case "s":           // Sick
-            color = "#FFFF00";
+          case "s": // Sick
+            style = "sick";
+            color = background_colors.sick;
             break;
-          case "u":           // Unofficial/unpaid time off (not counted)
-            color = "#3F3FFF";
+          case "u": // Unofficial/unpaid time off
+            style = "unofficial";
+            color = background_colors.unofficial;
             break;
-          case "v":           // Vacation
-            color = "#00FF00";
+          case "v": // Vacation
+            style = "vacation";
+            color = background_colors.vacation;
             break;
-          case "vo":          // Volunteer leave
-            color = "#00CCCC";
+          case "vo": // Volunteer leave
+            style = "volunteer"
+            color = background_colors.volunteer;
             break;
         }
 
         color = lighten_color(color, pto.days);
     }
 
-    return color;
+    return [style, color];
 }
 
 /*
@@ -377,6 +410,9 @@ function decrement_pto_remaining(pto_remaining, pto)
             break;
           case "s":
             pto_remaining.sick -= pto.days;
+            break;
+          case "u":
+            pto_remaining.unofficial += pto.days;
             break;
           case "v":
             pto_remaining.vacation -= pto.days;
@@ -428,7 +464,7 @@ function generate_month(month, year, pto_remaining, pto_database, places)
     // A month is a table item (TD) that contains a table
     //
     document.write("  <TD>\n");
-    document.write("    <TABLE BORDER=1 CELLSPACING=0 BGCOLOR='#DDDDDD'>\n");
+    document.write("    <TABLE BORDER=1 CELLSPACING=0 CLASS='month'>\n");
 
     // The caption is the month's name
     document.write("    <CAPTION><B>" + name + "</B></CAPTION>\n");
@@ -468,12 +504,16 @@ function generate_month(month, year, pto_remaining, pto_database, places)
         var key = month + "/" + day;
         var pto = pto_database[key];
 
-        var color = get_color(day_of_week, pto);
+        var colorstyle = get_color(day_of_week, pto);
 
         // Each date is a table cell (TD), using the PTO-derived
         // background color
         //
-        document.write("      <TD BGCOLOR='" + color + "'");
+        document.write("      <TD CLASS='" + colorstyle[0] + "'");
+        
+        if (colorstyle[1] != "")
+            document.write(" STYLE='background-color:" + colorstyle[1] + ";'");
+        
         if (pto)
         {
             // If there is any PTO, its decription is its tool-tip
@@ -694,6 +734,7 @@ function generate_pto_database(pto_data)
  *     vacation_sold - Number of days of vacation sold (cash paid in
  *                     lieu)
  *
+ *
  *     vacation_accrual
  *     sick_accrual
  *         If false, then the correspinding leave (vacation or sick)
@@ -752,8 +793,8 @@ function generate_pto_database(pto_data)
  *         "v"  - Vacation
  *         "vo" - Volunteer leave
  *         "w"  - Working day.  Used when a weekend day is a
- *             work-dayworking on a weekend, which sometimes happens
- *             in China.
+ *                work-dayworking on a weekend, which sometimes happens
+ *                in China.
  *     3 - days - Number - The number of days off.  Fractions may be
  *             used when a partial day will be take off.  Negative
  *             values and values greater than 1 are valid and may be
@@ -831,6 +872,8 @@ function generate_body(company, name, year, pto_counts, pto_data,
      * floating, personal, sick, vacation, and volunteer are all
      * counts of PTO remaining
      *
+     * unofficial is a count of unofficial/unpaid days off used.
+     *
      * vacation_sold is a count of days PTO that were sold
      *
      * sick_accrual and vacation_accrual are is the number of days
@@ -844,6 +887,7 @@ function generate_body(company, name, year, pto_counts, pto_data,
         floating                : pto_counts.floating,
         personal                : pto_counts.personal,
         sick                    : pto_counts.sick,
+        unofficial              : 0,
         vacation                : pto_counts.vacation,
         vacation_sold           : pto_counts.vacation_sold,
         volunteer               : pto_counts.volunteer,
@@ -898,7 +942,7 @@ function generate_body(company, name, year, pto_counts, pto_data,
     pto_remaining.vacation += pto_counts.vacation_carryin;
 
     // Generate the outermost table header
-    document.write("<TABLE BGCOLOR='#AADDFF' CELLSPACING=10>\n");
+    document.write("<TABLE CLASS='calendar' CELLSPACING=10>\n");
     document.write("<CAPTION><H1>" + name + "'s PTO for " +
                    year + "</H1></CAPTION>\n\n");
 
@@ -933,16 +977,17 @@ function generate_body(company, name, year, pto_counts, pto_data,
     document.write("<P></P>\n");
     document.write("<TABLE BORDER=1 CELLSPACING=0>\n");
     document.write("<CAPTION><B>Legend</B></CAPTION>\n");
-    document.write("<TR><TD BGCOLOR='#FF0000'>" + company +
+    document.write("<TR><TD CLASS='holiday'>" + company +
                    " Closed</TD></TR>\n");
 
     if (pto_counts.floating > 0)
-        document.write("<TR><TD BGCOLOR='#FF9999'>Floating holiday (" +
-                       pto_counts.floating + " total)</TD></TR>\n");
+        document.write("<TR><TD CLASS='floating'>Floating holiday (" +
+                       pto_counts.floating +
+                       " total)</TD></TR>\n");
 
     if (pto_counts.vacation > 0)
     {
-        document.write("<TR><TD BGCOLOR='#00FF00'>Vacation (" +
+        document.write("<TR><TD CLASS='vacation'>Vacation (" +
                        pto_counts.vacation +
                        generate_carryin_text(pto_counts.vacation_carryin,
                                              pto_counts.vacation, places) +
@@ -966,16 +1011,18 @@ function generate_body(company, name, year, pto_counts, pto_data,
     }
 
     if (pto_counts.personal > 0)
-        document.write("<TR><TD BGCOLOR='#00FFFF'>Personal days (" +
-                       pto_counts.personal + " total)</TD></TR>\n");
+        document.write("<TR><TD CLASS='personal'>Personal days (" +
+                       pto_counts.personal +
+                       " total)</TD></TR>\n");
 
     if (pto_counts.volunteer > 0)
-        document.write("<TR><TD BGCOLOR='#00CCCC'>Volunteer leave (" +
-                       pto_counts.volunteer + " total)</TD></TR>\n");
+        document.write("<TR><TD CLASS='volunteer'>Volunteer leave (" +
+                       pto_counts.volunteer +
+                       " total)</TD></TR>\n");
 
     if (pto_counts.sick > 0)
     {
-        document.write("<TR><TD BGCOLOR='#FFFF00'>Sick leave (" +
+        document.write("<TR><TD CLASS='sick'>Sick leave (" +
                        pto_counts.sick +
                        generate_carryin_text(pto_counts.sick_carryin,
                                              pto_counts.sick, places) +
@@ -997,6 +1044,12 @@ function generate_body(company, name, year, pto_counts, pto_data,
 
         document.write("</TD></TR>\n");
     }
+
+    if (pto_remaining.unofficial > 0)
+        document.write("<TR><TD CLASS='unofficial'>" +
+                       "Unofficial/unpaid time off (" +
+                       pto_remaining.unofficial +
+                       " total)</TD></TR>\n");
 
     document.write("</TABLE>\n");
     document.write("<P>\n");
@@ -1024,9 +1077,21 @@ function generate_body(company, name, year, pto_counts, pto_data,
 /*
  * Edit the containing HTML file, replacing the "DocTitle" element.
  * This way we can change the TITLE element.
+ *
+ * We're not using this anymore, but keep it around for support of older
+ * calendars based on an older version of this script.
  */
 function set_name_and_year(name, year)
 {
     document.getElementById("DocTitle").innerHTML =
         name + "'s PTO for " + year;
+}
+
+/*
+ * Generate the HTML file's header content
+ */
+function generate_header(name, year)
+{
+    document.write("<TITLE>" + name + "'s PTO for " + year + "</TITLE>\n");
+    document.write("<LINK REL='stylesheet' HREF='calendar_generator.css'>\n");
 }

@@ -9,8 +9,8 @@ Example:
 
 Expected usage:
 
-1. Copy `calendar_generator.js` to the location where you want to serve
-   calendars (a web server or a local directory)
+1. Copy `calendar_generator.js` and `calendar_generator.css` to the location
+   where you want to serve calendars (a web server or a local directory)
 
 2. Create an HTML file for the month in that same location.  Use the provided
    `sample_calendar.html` file as a template.
@@ -124,6 +124,10 @@ Expected usage:
       * **s**  
         Sick leave.  Some companies treat these like vacation days, while some
         impose rules for their use.
+        
+      * **u**  
+        Unofficial/unpaid time off.  These days are not deducted from any
+        limit, but the total count is presented in the legend/footer.
         
       * **v**  
         Vacation

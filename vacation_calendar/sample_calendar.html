@@ -3,17 +3,20 @@
 <HTML>
 <HEAD>
 <META http-equiv="Content-type" content="text/html;charset=ISO-8859-1">
+
 <SCRIPT SRC="calendar_generator.js"></SCRIPT>
+<SCRIPT>
+  var company="My Company"
+  var name="My Name"
+  var year=2023
+  generate_header(name, year)
+</SCRIPT>
 
 <TITLE ID="DocTitle">noname's PTO for noyear</TITLE>
 </HEAD>
 <BODY TEXT='#000000' BGCOLOR='FFFFFF'>
 <P></P>
 <SCRIPT>
-var company="My Company"
-var name="My Name"
-var year=2023
-
 // Count of available paid time-off for the year, in days
 //
 var pto_counts =
@@ -23,7 +26,7 @@ var pto_counts =
 
     // Personal leave
     personal                 :  2,
-    
+
     // Sick leave
     sick                     :  5,
 
@@ -69,14 +72,14 @@ var pto_counts =
     // The maximum amount of sick leave that can be accrued before accrual
     // stops
     max_sick_accrual         : 10,
-    
+
 };
 
 /*
  * If you are paid biweekly, then in any given year, two (rarely three) months
  * will have three paychecks (and therefore three days where vacation accrues).
  * Rather than attempt to compute these dates, this variable specifies the
- * months that have three paychecks. 
+ * months that have three paychecks.
  *
  * If you are paid bimonthly, then this array should be empty, because there
  * will be no three-check months
@@ -146,6 +149,5 @@ var pto_data = [
     [12, 29, "v",  1,    "Family trip"],
 ];
 
-set_name_and_year(name, year);
 generate_body(company, name, year, pto_counts, pto_data, three_check_months);
 </SCRIPT>
