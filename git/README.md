@@ -9,6 +9,7 @@ using Emacs.
 * [gitediffcommit](#gitediffcommit)
 * [gitediffcommit2](#gitediffcommit2)
 * [gitview](#gitview)
+* [githead](#githead)
 
 ## `gitediff`
 
@@ -213,3 +214,16 @@ Where:
     comparison.
     
     See [gitediff](#gitediff), above, for the `#<rev>` syntax.
+
+## `githead`
+
+View the most recent log entry for a group of repositories, identified by the
+directories to which they have been cloned.
+
+Usage: `githead [<directory>...]`
+
+Where:
+* `<directory>` is a directory under Git version control.
+
+For each directory specified, the script will perform a `git log -1`, showing
+information about the most recent commit.
