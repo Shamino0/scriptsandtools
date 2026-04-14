@@ -710,18 +710,21 @@ function generate_pto_database(pto_data)
 
 /*
  * Generate the navigation links
+ *
+ * Unicode 1F844 is Unicode LEFTWARDS HEAVY ARROW
+ *         1F846 is Unicode RIGHTWARDS HEAVY ARROW
  */
 function generate_navigation_links()
 {
-    document.write("<DIV STYLE='float:left;'>\n");
+    document.write("<DIV STYLE='float:left;'>");
     document.write("<A HREF='pto" + (year-1) + ".html'>" +
-                   "&lt;&lt;&lt;----- Previous year</A>\n");
-    document.write("</DIV><DIV STYLE='float:right;'>\n");
+                   "&#x1F844 Previous year</A>");
+    document.write("</DIV><DIV STYLE='float:right;'>");
     document.write("<A HREF='pto" + (year+1) + ".html'>" +
-                   "Next year -----&gt;&gt;&gt;</A>\n");
-    document.write("</DIV><DIV STYLE='text-align:center;'>\n");
-    document.write("<A HREF='pto.html'>This year</A>\n");
-    document.write("</DIV>\n");
+                   "Next year &#x1F846;</A>");
+    document.write("</DIV><DIV STYLE='text-align:center;'>");
+    document.write("<A HREF='pto.html'>This year</A>");
+    document.write("</DIV><BR />\n");
 }
 
 /*
