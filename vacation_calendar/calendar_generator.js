@@ -78,7 +78,7 @@ function toFixedStripZeros(number, places)
  */
 function generateDaysHours(description, days, places, max)
 {
-    document.write("    " + description + ": ");
+    document.write("      " + description + ": ");
     if ((days < 0) || ((typeof max !== 'undefined') && (days > max)))
     {
         document.write("<SPAN CLASS='alert'>");
@@ -464,7 +464,7 @@ function generate_month(month, year, pto_remaining, pto_database, places)
     // A month is a table item (TD) that contains a table
     //
     document.write("  <TD>\n");
-    document.write("    <TABLE BORDER=1 CELLSPACING=0 CLASS='month'>\n");
+    document.write("    <TABLE CLASS='month'>\n");
 
     // The caption is the month's name
     document.write("    <CAPTION><B>" + name + "</B></CAPTION>\n");
@@ -543,11 +543,14 @@ function generate_month(month, year, pto_remaining, pto_database, places)
     // summary of PTO remaining.  Note that zero-values cause the
     // entire line to be omitted.
     //
+
+    document.write("    <DIV CLASS='tally'>\n");
+                   
     var had_output = false;
 
     if (pto_remaining.num_checks[month-1] > 2)
     {
-        document.write("    <B>" +
+        document.write("      <B>" +
                        pto_remaining.num_checks[month-1] +
                        " paychecks this month</B>");
         had_output = true;
@@ -651,6 +654,7 @@ function generate_month(month, year, pto_remaining, pto_database, places)
     if (had_output)
         document.write("\n");
 
+    document.write("    </DIV>\n");
     document.write("  </TD>\n");
 }
 
@@ -717,6 +721,7 @@ function generate_pto_database(pto_data)
  */
 function generate_navigation_links()
 {
+    document.write("<DIV CLASS='noprint'>\n");
     document.write("<DIV STYLE='float:left;'>");
     document.write("<A HREF='pto" + (year-1) + ".html'>" +
                    "<SPAN STYLE='font-size:2em'>&#x21D0;</SPAN> " +
@@ -729,7 +734,8 @@ function generate_navigation_links()
     document.write("<A HREF='pto.html'>" +
                    "<SPAN STYLE='font-size:2em'>&#x21D1;</SPAN> " +
                    "This year</A>");
-    document.write("</DIV><BR />\n");
+    document.write("</DIV>\n");
+    document.write("</DIV>\n");
 }
 
 /*
@@ -968,7 +974,7 @@ function generate_body(company, name, year, pto_counts, pto_data,
     generate_navigation_links()
     
     // Generate the outermost table header
-    document.write("<TABLE CLASS='calendar' CELLSPACING=10>\n");
+    document.write("<TABLE CLASS='calendar'>\n");
     document.write("<CAPTION><H1>" + name + "'s PTO for " +
                    year + "</H1></CAPTION>\n\n");
 
@@ -1001,7 +1007,7 @@ function generate_body(company, name, year, pto_counts, pto_data,
 
     // Footer text
     document.write("<P></P>\n");
-    document.write("<TABLE BORDER=1 CELLSPACING=0>\n");
+    document.write("<TABLE CLASS='legend'>\n");
     document.write("<CAPTION><B>Legend</B></CAPTION>\n");
     document.write("<TR><TD CLASS='holiday'>" + company +
                    " Closed</TD></TR>\n");
@@ -1093,7 +1099,7 @@ function generate_body(company, name, year, pto_counts, pto_data,
     generate_carryout_warning("Vacation", pto_remaining.vacation,
                               pto_counts.vacation_carryover_limit, places);
 
-    document.write("</P><P>\n");
+    document.write("</P><P CLASS='noprint'>\n");
 
     document.write("Hover your mouse over a time-off date for an " +
                    "explanation.\n");
